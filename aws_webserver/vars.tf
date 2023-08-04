@@ -10,10 +10,10 @@ variable "ami" {
 
 variable "instance_type" {
   description = "Default Instance Type"
-  default = "t2.micro"
+  default = "t2.small"
 }
 
 variable "name" {
   description = "The name for the EC2 Instance and all other resources in this module."
-  default     = "webserver"
+  default     = "web"
 }
