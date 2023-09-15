@@ -17,7 +17,7 @@ data "template_file" "prefix" {
 
 resource "aws_key_pair" "webserver-kp" {
   key_name   = "${trimspace(data.template_file.prefix.rendered)}-${var.name}-kp"
-  public_key = file("/root/.ssh/id_rsa.pub")
+  public_key = file("/var/lib/jenkins/.ssh/id_rsa.pub")
 }
 
 resource "aws_security_group" "webserver-sg" {
