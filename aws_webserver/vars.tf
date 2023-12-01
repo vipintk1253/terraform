@@ -15,5 +15,5 @@ variable "instance_type" {
 
 variable "name" {
   description = "The name for the EC2 Instance and all other resources in this module."
-  default     = "web"
+  default     = "apache-web"
 }
