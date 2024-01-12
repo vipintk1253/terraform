@@ -77,7 +77,7 @@ resource "azurerm_linux_virtual_machine" "main" {
   name                            = "${trimspace(data.template_file.prefix.rendered)}-newindia-vm"
   resource_group_name             = azurerm_resource_group.main.name
   location                        = azurerm_resource_group.main.location
-  size                            = "Standard_B1s"
+  size                            = "Standard_F1"
   admin_username                  = "adminuser"
   admin_password                  = "P@ssw0rd1234!"
   disable_password_authentication = false
