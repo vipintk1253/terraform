@@ -24,8 +24,8 @@ resource "kubernetes_persistent_volume" "example" {
     }
     access_modes = ["ReadWriteMany"]
     persistent_volume_source {
-      vsphere_volume {
-        volume_path = "/mnt/data"
+      host_path {
+        path = "/mnt/data"
       }
     }
   }
