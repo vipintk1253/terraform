@@ -72,7 +72,7 @@ resource "kubernetes_deployment" "example" {
 
       spec {
         container {
-          image = "smehta26/apache:alpine"
+          image = "smehta26/apache:centos"
           name  = "apache-webserver"
 
           volume_mount {
@@ -92,3 +92,24 @@ resource "kubernetes_deployment" "example" {
     }
   }
 }
+
+resource "kubernetes_service" "apache" {
+  metadata {
+    name = "apache-webserver"
+  }
+  spec {
+    selector = {
+      app = kubernetes_deployment.example.metadata.0.labels.app
+    }
+
+    port {
+      port        = 80
+      node_port   = 32000
+      target_port = 80
+    }
+
+    type = "LoadBalancer"
+  }
+  wait_for_load_balancer = false
+}
+
