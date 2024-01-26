@@ -32,6 +32,6 @@ resource "docker_container" "apache" {
 
   volumes {
     container_path = "/var/www/html/index.html"
-    host_path      = "${path.module}/index.html"
+    host_path      = "/etc/.docker/index.html"
   }
 }
