@@ -79,6 +79,11 @@ resource "kubernetes_deployment" "example" {
             mount_path = "/var/www/html"
             name       = "apache-webserver-volume"
           }
+
+          volume_mount {
+            mount_path = "/var/log/httpd"
+            name       = "apache-webserver-volume"
+          }
         }
 
         volume {
