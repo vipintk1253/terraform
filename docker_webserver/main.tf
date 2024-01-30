@@ -15,7 +15,7 @@ provider "docker" {
 }
 
 resource "docker_image" "apache" {
-  name = "smehta26/apache:alpine"
+  name = "smehta26/apache:rocky"
   build {
     context = "."
   }
