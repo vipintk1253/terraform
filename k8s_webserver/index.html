@@ -1,5 +1,14 @@
 <html>
-  <body>
-    <h1>Welcome to K8s Apache Web Server</h1>
-  </body>
+<body>
+        <h1>{{ msg }}<br><br>
+
+        Current Time    :       {{ ansible_date_time.date }} {{ ansible_date_time.time }}<br>
+        IP Address      :       {{ ansible_default_ipv4.address }}<br>
+        Operating System:       {{ ansible_distribution }} {{ ansible_distribution_version }}<br>
+        FQDN            :       {{ ansible_fqdn }}<br>
+<br>
+{{ lmsg }}
+</h1>
+</body>
 </html>
+
