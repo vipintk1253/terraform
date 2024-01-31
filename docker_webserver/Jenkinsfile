@@ -1,0 +1,44 @@
+
+pipeline {
+  agent any
+  stages {
+
+    stage('Checkout Scm') {
+      steps {
+            checkout([
+            $class: 'GitSCM',
+            branches: [[name: 'main']],
+            userRemoteConfigs: [[url: 'https://github.com/sagarhere4u/terraform.git']]
+        ])
+      }            
+    }
+
+    stage('Shell script 0') {
+      steps {
+        sh 'cd docker_webserver ; sudo cp index.html /etc/.docker/ ; terraform init ; terraform validate ; sudo terraform plan ; sudo terraform apply -auto-approve'
+      }
+    }
+
+    stage('Maven Build 1') {
+      steps {
+        sh 'mvn clean verify -f docker_webserver/pom.xml'
+      }
+
+     	post{
+      		always{
+	      		dir("docker_webserver/target/jmeter/report/"){
+				      perfReport '**/*.jtl'
+	    	 	}
+      		
+      		}
+      	}
+    }
+
+    stage('Shell script 2') {
+      steps {
+        sh 'cd docker_webserver ; terraform init ; sudo terraform destroy -auto-approve'
+      }
+    }
+
+  }
+}
