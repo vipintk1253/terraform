@@ -1,6 +1,9 @@
 ---
 - hosts: mygroup
   remote_user: root
+  vars:
+    msg: "Welcome to DevOps Apache Home"
+    lmsg: "Thank You"
   tasks:
   - name: Deploy Index
     template:
