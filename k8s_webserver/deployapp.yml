@@ -3,9 +3,6 @@
   remote_user: root
   tasks:
   - name: Deploy Index
-    ansible.builtin.copy:
+    template:
       src: /tmp/index.html
       dest: /mnt/data/index.html
-      owner: root
-      group: root
-      mode: '0755'
