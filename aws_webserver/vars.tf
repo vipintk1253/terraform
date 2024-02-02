@@ -10,7 +10,7 @@ variable "ami" {
 
 variable "instance_type" {
   description = "Default Instance Type"
-  default = "t2.small"
+  default = "t2.micro"
 }
 
 variable "name" {
