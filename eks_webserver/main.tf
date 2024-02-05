@@ -38,7 +38,7 @@ provider "kubernetes" {
   exec {
     api_version = "client.authentication.k8s.io/v1beta1"
     args        = ["eks", "get-token", "--cluster-name", "${trimspace(data.template_file.cluster_name.rendered)}"]
-    command     = "aws"
+    command     = "/usr/local/bin/aws"
   }
 }
 
