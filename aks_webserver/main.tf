@@ -114,7 +114,6 @@ resource "kubernetes_service" "apache" {
 
     port {
       port        = 80
-      node_port   = 32000
       target_port = 80
     }
 
