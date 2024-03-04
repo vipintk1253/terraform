@@ -1,13 +1,13 @@
 resource "azurerm_resource_group" "example" {
-  name     = "${var.prefix}-rg"
+  name     = "${trimspace(data.template_file.prefix.rendered)}-aks-rg"
   location = var.location
 }
 
 resource "azurerm_kubernetes_cluster" "example" {
-  name                = "${var.prefix}-cluster"
+  name                = "${trimspace(data.template_file.prefix.rendered)}-aks-cluster"
   location            = azurerm_resource_group.example.location
   resource_group_name = azurerm_resource_group.example.name
-  dns_prefix          = "${var.prefix}-k8s"
+  dns_prefix          = "${trimspace(data.template_file.prefix.rendered)}-aks-k8s"
 
   default_node_pool {
     name       = "default"
@@ -26,5 +26,5 @@ resource "azurerm_kubernetes_cluster" "example" {
 
 resource "local_file" "config" {
   content  = azurerm_kubernetes_cluster.example.kube_config_raw
-  filename = "${path.module}/config"
+  filename = "/etc/.azure/aks_config"
 }
