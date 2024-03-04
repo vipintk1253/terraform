@@ -34,92 +34,119 @@ provider "azurerm" {
   tenant_id = "${trimspace(data.template_file.tenant_id.rendered)}"
 }
 
-resource "azurerm_resource_group" "main" {
-  name     = "${trimspace(data.template_file.prefix.rendered)}-win-resources"
+resource "azurerm_resource_group" "example" {
+  name     = "${trimspace(data.template_file.prefix.rendered)}-win-rg"
   location = var.location
 }
 
 resource "azurerm_network_security_group" "example" {
   name                = "${trimspace(data.template_file.prefix.rendered)}-win-sg"
-  location            = azurerm_resource_group.main.location
-  resource_group_name = azurerm_resource_group.main.name
+  location            = azurerm_resource_group.example.location
+  resource_group_name = azurerm_resource_group.example.name
 
   security_rule {
-    name                       = "winrule"
+    name                       = "${trimspace(data.template_file.prefix.rendered)}-win-sg-rule1"
     priority                   = 100
     direction                  = "Inbound"
     access                     = "Allow"
     protocol                   = "Tcp"
     source_port_range          = "*"
-    destination_port_range     = "3389"
+    destination_port_range     = "3389-6000"
     source_address_prefix      = "*"
     destination_address_prefix = "*"
   }
-
-  tags = {
-    environment = "Production"
-  }
 }
 
-resource "azurerm_virtual_network" "main" {
-  name                = "${trimspace(data.template_file.prefix.rendered)}-win-network"
-  address_space       = ["10.0.0.0/16"]
-  location            = azurerm_resource_group.main.location
-  resource_group_name = azurerm_resource_group.main.name
+resource "azurerm_virtual_network" "example" {
+  name                = "${trimspace(data.template_file.prefix.rendered)}-win-vn"
+  address_space       = var.address_space
+  location            = azurerm_resource_group.example.location
+  resource_group_name = azurerm_resource_group.example.name
 }
 
-resource "azurerm_subnet" "internal" {
-  name                 = "${trimspace(data.template_file.prefix.rendered)}-win-snet"
-  resource_group_name  = azurerm_resource_group.main.name
-  virtual_network_name = azurerm_virtual_network.main.name
-  address_prefixes     = ["10.0.2.0/24"]
+resource "azurerm_subnet" "example" {
+  name                 = "${trimspace(data.template_file.prefix.rendered)}-win-sn"
+  resource_group_name  = azurerm_resource_group.example.name
+  virtual_network_name = azurerm_virtual_network.example.name
+  address_prefixes     = var.address_prefixes
 }
 
-resource "azurerm_public_ip" "main" {
-  name                = "${trimspace(data.template_file.prefix.rendered)}-win-pip"
-  resource_group_name = azurerm_resource_group.main.name
-  location            = azurerm_resource_group.main.location
-  allocation_method   = "Static"
+resource "azurerm_public_ip" "example" {
+  name                = "${trimspace(data.template_file.prefix.rendered)}-win-pi"
+  resource_group_name = azurerm_resource_group.example.name
+  location            = azurerm_resource_group.example.location
+  allocation_method   = var.allocation_method
 }
 
-resource "azurerm_network_interface" "main" {
-  name                = "${trimspace(data.template_file.prefix.rendered)}-win-nic"
-  resource_group_name = azurerm_resource_group.main.name
-  location            = azurerm_resource_group.main.location
+resource "azurerm_network_interface" "example" {
+  name                = "${trimspace(data.template_file.prefix.rendered)}-win-ni"
+  location            = azurerm_resource_group.example.location
+  resource_group_name = azurerm_resource_group.example.name
 
   ip_configuration {
-    name                          = "internal"
-    subnet_id                     = azurerm_subnet.internal.id
-    private_ip_address_allocation = "Dynamic"
-    public_ip_address_id          = azurerm_public_ip.main.id
+    name                          = "${trimspace(data.template_file.prefix.rendered)}-win-ipc"
+    subnet_id                     = azurerm_subnet.example.id
+    private_ip_address_allocation = var.private_ip_address_allocation
+    public_ip_address_id          = azurerm_public_ip.example.id
   }
 }
 
 resource "azurerm_network_interface_security_group_association" "example" {
-  network_interface_id      = azurerm_network_interface.main.id
+  network_interface_id      = azurerm_network_interface.example.id
   network_security_group_id = azurerm_network_security_group.example.id
 }
 
 resource "azurerm_windows_virtual_machine" "example" {
   name                = "${trimspace(data.template_file.prefix.rendered)}-win-vm"
-  resource_group_name = azurerm_resource_group.main.name
-  location            = azurerm_resource_group.main.location
-  size                = "Standard_F2"
-  admin_username      = "adminuser"
-  admin_password      = "P@ssw0rd1234!"
+  resource_group_name = azurerm_resource_group.example.name
+  location            = azurerm_resource_group.example.location
+
+  size                = var.size
+  admin_username      = var.admin_username
+  admin_password      = var.admin_password
+  boot_diagnostics {
+  }
+
   network_interface_ids = [
-    azurerm_network_interface.main.id,
+    azurerm_network_interface.example.id
   ]
 
   os_disk {
-    caching              = "ReadWrite"
-    storage_account_type = "Standard_LRS"
+    caching = var.os_disk.caching
+    storage_account_type = var.os_disk.storage_account_type
   }
 
   source_image_reference {
-    publisher = "MicrosoftWindowsServer"
-    offer     = "WindowsServer"
-    sku       = "2016-Datacenter"
-    version   = "latest"
+    publisher = var.source_image_reference.publisher
+    offer     = var.source_image_reference.offer
+    sku       = var.source_image_reference.sku
+    version   = var.source_image_reference.version
+  }
+
+  provisioner "local-exec" {
+    command = "echo ${self.public_ip_address} > mypublicip"
+  }
+
+  provisioner "file" {
+    source = "mypublicip"
+    destination = "/tmp/mypublicip"
+    connection {
+      user = var.admin_username
+      password = var.admin_password
+      type = "winrm"
+      host = self.public_ip_address
+    }
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "dir",
+    ]
+    connection {
+      user = var.admin_username
+      password = var.admin_password
+      type = "winrm"
+      host = self.public_ip_address
+    }
   }
 }
