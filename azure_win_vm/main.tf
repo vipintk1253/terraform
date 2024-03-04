@@ -96,45 +96,71 @@ resource "azurerm_network_interface_security_group_association" "example" {
   network_security_group_id = azurerm_network_security_group.example.id
 }
 
-resource "azurerm_windows_virtual_machine" "example" {
+#resource "azurerm_windows_virtual_machine" "example" {
+resource "azurerm_virtual_machine" "example" {
   name                = "${trimspace(data.template_file.prefix.rendered)}-win-vm"
   resource_group_name = azurerm_resource_group.example.name
   location            = azurerm_resource_group.example.location
-
-  size                = var.size
-  admin_username      = var.admin_username
-  admin_password      = var.admin_password
-  boot_diagnostics {
-  }
-
+  vm_size                = var.size
   network_interface_ids = [
     azurerm_network_interface.example.id
   ]
 
-  os_disk {
-    caching = var.os_disk.caching
-    storage_account_type = var.os_disk.storage_account_type
+  storage_image_reference {
+    publisher = "MicrosoftWindowsServer"
+    offer     = "WindowsServer"
+    sku       = "2019-Datacenter"
+    version   = "latest"
   }
 
-  source_image_reference {
-    publisher = var.source_image_reference.publisher
-    offer     = var.source_image_reference.offer
-    sku       = var.source_image_reference.sku
-    version   = var.source_image_reference.version
+  storage_os_disk {
+    name              = "osdisk"
+    caching           = "ReadWrite"
+    create_option     = "FromImage"
+    managed_disk_type = "Standard_LRS"
+  }
+
+  os_profile {
+    computer_name  = "${trimspace(data.template_file.prefix.rendered)}-win-vm"
+    admin_username = var.admin_username
+    admin_password = var.admin_password
+    custom_data    = file("winrm.ps1")
+  }
+
+  os_profile_windows_config {
+    provision_vm_agent = true
+    winrm {
+      protocol = "HTTP"
+    }
+    # Auto-Login's required to configure WinRM
+    additional_unattend_config {
+      pass         = "oobeSystem"
+      component    = "Microsoft-Windows-Shell-Setup"
+      setting_name = "AutoLogon"
+      content      = "<AutoLogon><Password><Value>${var.admin_password}</Value></Password><Enabled>true</Enabled><LogonCount>1</LogonCount><Username>${var.admin_username}</Username></AutoLogon>"
+    }
+
+    # Unattend config is to enable basic auth in WinRM, required for the provisioner stage.
+    additional_unattend_config {
+      pass         = "oobeSystem"
+      component    = "Microsoft-Windows-Shell-Setup"
+      setting_name = "FirstLogonCommands"
+      content      = file("FirstLoginCommand.xml")
+    }
   }
 
   provisioner "local-exec" {
-    command = "echo ${self.public_ip_address} > mypublicip"
+    command = "echo ${azurerm_public_ip.example.ip_address} > mypublicip"
   }
 
   provisioner "file" {
     source = "mypublicip"
-    destination = "/tmp/mypublicip"
+    destination = "c:/mypublicip"
     connection {
       user = var.admin_username
       password = var.admin_password
       type = "winrm"
-      host = self.public_ip_address
+      host = azurerm_public_ip.example.ip_address
     }
   }
 
@@ -146,7 +172,7 @@ resource "azurerm_windows_virtual_machine" "example" {
       user = var.admin_username
       password = var.admin_password
       type = "winrm"
-      host = self.public_ip_address
+      host = azurerm_public_ip.example.ip_address
     }
   }
 }
