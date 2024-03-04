@@ -35,12 +35,12 @@ provider "azurerm" {
 }
 
 resource "azurerm_resource_group" "main" {
-  name     = "${var.prefix}-win-resources"
+  name     = "${trimspace(data.template_file.prefix.rendered)}-win-resources"
   location = var.location
 }
 
 resource "azurerm_network_security_group" "example" {
-  name                = "${var.prefix}-win-sg"
+  name                = "${trimspace(data.template_file.prefix.rendered)}-win-sg"
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
 
@@ -62,28 +62,28 @@ resource "azurerm_network_security_group" "example" {
 }
 
 resource "azurerm_virtual_network" "main" {
-  name                = "${var.prefix}-win-network"
+  name                = "${trimspace(data.template_file.prefix.rendered)}-win-network"
   address_space       = ["10.0.0.0/16"]
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
 }
 
 resource "azurerm_subnet" "internal" {
-  name                 = "${var.prefix}-win-snet"
+  name                 = "${trimspace(data.template_file.prefix.rendered)}-win-snet"
   resource_group_name  = azurerm_resource_group.main.name
   virtual_network_name = azurerm_virtual_network.main.name
   address_prefixes     = ["10.0.2.0/24"]
 }
 
 resource "azurerm_public_ip" "main" {
-  name                = "${var.prefix}-win-pip"
+  name                = "${trimspace(data.template_file.prefix.rendered)}-win-pip"
   resource_group_name = azurerm_resource_group.main.name
   location            = azurerm_resource_group.main.location
   allocation_method   = "Static"
 }
 
 resource "azurerm_network_interface" "main" {
-  name                = "${var.prefix}-win-nic"
+  name                = "${trimspace(data.template_file.prefix.rendered)}-win-nic"
   resource_group_name = azurerm_resource_group.main.name
   location            = azurerm_resource_group.main.location
 
@@ -101,7 +101,7 @@ resource "azurerm_network_interface_security_group_association" "example" {
 }
 
 resource "azurerm_windows_virtual_machine" "example" {
-  name                = "${var.prefix}-win-vm"
+  name                = "${trimspace(data.template_file.prefix.rendered)}-win-vm"
   resource_group_name = azurerm_resource_group.main.name
   location            = azurerm_resource_group.main.location
   size                = "Standard_F2"
