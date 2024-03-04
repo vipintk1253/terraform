@@ -1,23 +1,51 @@
+terraform {
+  backend "local" {
+    path = "/etc/.azure/azure.win.vm.terraform.tfstate"
+  }
+  required_providers {
+    azurerm = {
+      source = "hashicorp/azurerm"
+      version = "3.61.0"
+    }
+  }
+}
+
+data "template_file" "prefix" {
+  template = file("/etc/.azure/prefix")
+}
+
+data "template_file" "client_id" {
+  template = file("/etc/.azure/client_id")
+}
+
+data "template_file" "tenant_id" {
+  template = file("/etc/.azure/tenant_id")
+}
+
+data "template_file" "sub_id" {
+  template = file("/etc/.azure/sub_id")
+}
+
 provider "azurerm" {
   features {}
-  client_certificate_path = "mycert.pfx"
-  subscription_id = "e7f340c5-89ac-403d-82ed-0571261dea04"
-  client_id = "9756399a-b46c-4508-bd40-051164a6206c"
-  tenant_id = "df8af829-df8a-41fe-8679-3e0a616165c5"
+  client_certificate_path = "/etc/.azure/mycert.pfx"
+  subscription_id = "${trimspace(data.template_file.sub_id.rendered)}"
+  client_id = "${trimspace(data.template_file.client_id.rendered)}"
+  tenant_id = "${trimspace(data.template_file.tenant_id.rendered)}"
 }
 
 resource "azurerm_resource_group" "main" {
-  name     = "${var.prefix}-resources"
+  name     = "${var.prefix}-win-resources"
   location = var.location
 }
 
 resource "azurerm_network_security_group" "example" {
-  name                = "acceptanceTestSecurityGroup1"
+  name                = "${var.prefix}-win-sg"
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
 
   security_rule {
-    name                       = "test123"
+    name                       = "winrule"
     priority                   = 100
     direction                  = "Inbound"
     access                     = "Allow"
@@ -34,28 +62,28 @@ resource "azurerm_network_security_group" "example" {
 }
 
 resource "azurerm_virtual_network" "main" {
-  name                = "${var.prefix}-network"
+  name                = "${var.prefix}-win-network"
   address_space       = ["10.0.0.0/16"]
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
 }
 
 resource "azurerm_subnet" "internal" {
-  name                 = "internal"
+  name                 = "${var.prefix}-win-snet"
   resource_group_name  = azurerm_resource_group.main.name
   virtual_network_name = azurerm_virtual_network.main.name
   address_prefixes     = ["10.0.2.0/24"]
 }
 
 resource "azurerm_public_ip" "main" {
-  name                = "${var.prefix}-pip"
+  name                = "${var.prefix}-win-pip"
   resource_group_name = azurerm_resource_group.main.name
   location            = azurerm_resource_group.main.location
   allocation_method   = "Static"
 }
 
 resource "azurerm_network_interface" "main" {
-  name                = "${var.prefix}-nic"
+  name                = "${var.prefix}-win-nic"
   resource_group_name = azurerm_resource_group.main.name
   location            = azurerm_resource_group.main.location
 
@@ -73,7 +101,7 @@ resource "azurerm_network_interface_security_group_association" "example" {
 }
 
 resource "azurerm_windows_virtual_machine" "example" {
-  name                = "example-machine"
+  name                = "${var.prefix}-win-vm"
   resource_group_name = azurerm_resource_group.main.name
   location            = azurerm_resource_group.main.location
   size                = "Standard_F2"
@@ -94,8 +122,4 @@ resource "azurerm_windows_virtual_machine" "example" {
     sku       = "2016-Datacenter"
     version   = "latest"
   }
-}
-
-output "Public_IP" {
-  value = azurerm_windows_virtual_machine.example.public_ip_address
 }
