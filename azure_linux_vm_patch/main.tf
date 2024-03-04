@@ -96,4 +96,24 @@ resource "azurerm_linux_virtual_machine" "main" {
     storage_account_type = "Standard_LRS"
     caching              = "ReadWrite"
   }
+
+  patch_mode = "AutomaticByPlatform"
+  provision_vm_agent = true
 }
+
+resource "null_resource" "mypatch" {
+  provisioner "remote-exec" {
+    inline = [
+      "sudo apt-get update -y",
+      "sudo hostname",
+    ]
+    connection {
+      user = "adminuser"
+      password = "P@ssw0rd1234!"
+      type = "ssh"
+      host = azurerm_linux_virtual_machine.main.public_ip_address
+    }
+  }
+}
+
+
