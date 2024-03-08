@@ -35,17 +35,17 @@ provider "azurerm" {
 }
 
 resource "azurerm_resource_group" "example" {
-  name     = "${trimspace(data.template_file.prefix.rendered)}-win-rg"
+  name     = "${trimspace(data.template_file.sub_id.rendered)}-win-rg"
   location = var.location
 }
 
 resource "azurerm_network_security_group" "example" {
-  name                = "${trimspace(data.template_file.prefix.rendered)}-win-sg"
+  name                = "${trimspace(data.template_file.sub_id.rendered)}-win-sg"
   location            = azurerm_resource_group.example.location
   resource_group_name = azurerm_resource_group.example.name
 
   security_rule {
-    name                       = "${trimspace(data.template_file.prefix.rendered)}-win-sg-rule1"
+    name                       = "${trimspace(data.template_file.sub_id.rendered)}-win-sg-rule1"
     priority                   = 100
     direction                  = "Inbound"
     access                     = "Allow"
@@ -58,33 +58,33 @@ resource "azurerm_network_security_group" "example" {
 }
 
 resource "azurerm_virtual_network" "example" {
-  name                = "${trimspace(data.template_file.prefix.rendered)}-win-vn"
+  name                = "${trimspace(data.template_file.sub_id.rendered)}-win-vn"
   address_space       = var.address_space
   location            = azurerm_resource_group.example.location
   resource_group_name = azurerm_resource_group.example.name
 }
 
 resource "azurerm_subnet" "example" {
-  name                 = "${trimspace(data.template_file.prefix.rendered)}-win-sn"
+  name                 = "${trimspace(data.template_file.sub_id.rendered)}-win-sn"
   resource_group_name  = azurerm_resource_group.example.name
   virtual_network_name = azurerm_virtual_network.example.name
   address_prefixes     = var.address_prefixes
 }
 
 resource "azurerm_public_ip" "example" {
-  name                = "${trimspace(data.template_file.prefix.rendered)}-win-pi"
+  name                = "${trimspace(data.template_file.sub_id.rendered)}-win-pi"
   resource_group_name = azurerm_resource_group.example.name
   location            = azurerm_resource_group.example.location
   allocation_method   = var.allocation_method
 }
 
 resource "azurerm_network_interface" "example" {
-  name                = "${trimspace(data.template_file.prefix.rendered)}-win-ni"
+  name                = "${trimspace(data.template_file.sub_id.rendered)}-win-ni"
   location            = azurerm_resource_group.example.location
   resource_group_name = azurerm_resource_group.example.name
 
   ip_configuration {
-    name                          = "${trimspace(data.template_file.prefix.rendered)}-win-ipc"
+    name                          = "${trimspace(data.template_file.sub_id.rendered)}-win-ipc"
     subnet_id                     = azurerm_subnet.example.id
     private_ip_address_allocation = var.private_ip_address_allocation
     public_ip_address_id          = azurerm_public_ip.example.id
@@ -97,65 +97,44 @@ resource "azurerm_network_interface_security_group_association" "example" {
 }
 
 resource "azurerm_windows_virtual_machine" "example" {
-  name                = "${trimspace(data.template_file.prefix.rendered)}-win-vm"
+  name                = "${trimspace(data.template_file.sub_id.rendered)}-win-win-vm"
   resource_group_name = azurerm_resource_group.example.name
   location            = azurerm_resource_group.example.location
-  admin_username = var.admin_username
-  admin_password = var.admin_password
-  vm_size                = var.size
-  custom_data    = file("winrm.ps1")  
+
+  size                = var.size
+  admin_username      = var.admin_username
+  admin_password      = var.admin_password
+  boot_diagnostics {
+  }
+
   network_interface_ids = [
     azurerm_network_interface.example.id
   ]
 
-  storage_image_reference {
-    publisher = "MicrosoftWindowsServer"
-    offer     = "WindowsServer"
-    sku       = "2019-Datacenter"
-    version   = "latest"
+  os_disk {
+    caching = var.os_disk.caching
+    storage_account_type = var.os_disk.storage_account_type
   }
 
-  storage_os_disk {
-    name              = "osdisk"
-    caching           = "ReadWrite"
-    create_option     = "FromImage"
-    managed_disk_type = "Standard_LRS"
-  }
-
-  os_profile_windows_config {
-    provision_vm_agent = true
-    winrm {
-      protocol = "HTTP"
-    }
-    # Auto-Login's required to configure WinRM
-    additional_unattend_config {
-      pass         = "oobeSystem"
-      component    = "Microsoft-Windows-Shell-Setup"
-      setting_name = "AutoLogon"
-      content      = "<AutoLogon><Password><Value>${var.admin_password}</Value></Password><Enabled>true</Enabled><LogonCount>1</LogonCount><Username>${var.admin_username}</Username></AutoLogon>"
-    }
-
-    # Unattend config is to enable basic auth in WinRM, required for the provisioner stage.
-    additional_unattend_config {
-      pass         = "oobeSystem"
-      component    = "Microsoft-Windows-Shell-Setup"
-      setting_name = "FirstLogonCommands"
-      content      = file("FirstLoginCommand.xml")
-    }
+  source_image_reference {
+    publisher = var.source_image_reference.publisher
+    offer     = var.source_image_reference.offer
+    sku       = var.source_image_reference.sku
+    version   = var.source_image_reference.version
   }
 
   provisioner "local-exec" {
-    command = "echo ${azurerm_public_ip.example.ip_address} > mypublicip"
+    command = "echo ${self.public_ip_address} > mypublicip"
   }
 
   provisioner "file" {
     source = "mypublicip"
-    destination = "c:/mypublicip"
+    destination = "/tmp/mypublicip"
     connection {
       user = var.admin_username
       password = var.admin_password
       type = "winrm"
-      host = azurerm_public_ip.example.ip_address
+      host = self.public_ip_address
     }
   }
 
@@ -167,7 +146,20 @@ resource "azurerm_windows_virtual_machine" "example" {
       user = var.admin_username
       password = var.admin_password
       type = "winrm"
-      host = azurerm_public_ip.example.ip_address
+      host = self.public_ip_address
+    }
+  }
+}
+
+resource "null_resource" "first" {
+  provisioner "file" {
+    source = "mypublicip"
+    destination = "/tmp/mypublicip"
+    connection {
+      user = var.admin_username
+      password = var.admin_password
+      type = "winrm"
+      host = azurerm_windows_virtual_machine.example.public_ip_address
     }
   }
 }
