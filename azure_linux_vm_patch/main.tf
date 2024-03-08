@@ -1,3 +1,4 @@
+#lvm
 terraform {
   backend "local" {
     path = "/etc/.azure/azure.lvm.terraform.tfstate"
