@@ -1,6 +1,6 @@
 terraform {
   backend "local" {
-    path = "/etc/.azure/azure.vm.terraform.tfstate"
+    path = "/etc/.azure/azure.linux.vm.terraform.tfstate"
   }
   required_providers {
     azurerm = {
