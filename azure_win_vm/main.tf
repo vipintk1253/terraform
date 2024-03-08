@@ -35,17 +35,17 @@ provider "azurerm" {
 }
 
 resource "azurerm_resource_group" "example" {
-  name     = "${trimspace(data.template_file.sub_id.rendered)}-win-rg"
+  name     = "${trimspace(data.template_file.prefix.rendered)}-win-rg"
   location = var.location
 }
 
 resource "azurerm_network_security_group" "example" {
-  name                = "${trimspace(data.template_file.sub_id.rendered)}-win-sg"
+  name                = "${trimspace(data.template_file.prefix.rendered)}-win-sg"
   location            = azurerm_resource_group.example.location
   resource_group_name = azurerm_resource_group.example.name
 
   security_rule {
-    name                       = "${trimspace(data.template_file.sub_id.rendered)}-win-sg-rule1"
+    name                       = "${trimspace(data.template_file.prefix.rendered)}-win-sg-rule1"
     priority                   = 100
     direction                  = "Inbound"
     access                     = "Allow"
@@ -58,33 +58,33 @@ resource "azurerm_network_security_group" "example" {
 }
 
 resource "azurerm_virtual_network" "example" {
-  name                = "${trimspace(data.template_file.sub_id.rendered)}-win-vn"
+  name                = "${trimspace(data.template_file.prefix.rendered)}-win-vn"
   address_space       = var.address_space
   location            = azurerm_resource_group.example.location
   resource_group_name = azurerm_resource_group.example.name
 }
 
 resource "azurerm_subnet" "example" {
-  name                 = "${trimspace(data.template_file.sub_id.rendered)}-win-sn"
+  name                 = "${trimspace(data.template_file.prefix.rendered)}-win-sn"
   resource_group_name  = azurerm_resource_group.example.name
   virtual_network_name = azurerm_virtual_network.example.name
   address_prefixes     = var.address_prefixes
 }
 
 resource "azurerm_public_ip" "example" {
-  name                = "${trimspace(data.template_file.sub_id.rendered)}-win-pi"
+  name                = "${trimspace(data.template_file.prefix.rendered)}-win-pi"
   resource_group_name = azurerm_resource_group.example.name
   location            = azurerm_resource_group.example.location
   allocation_method   = var.allocation_method
 }
 
 resource "azurerm_network_interface" "example" {
-  name                = "${trimspace(data.template_file.sub_id.rendered)}-win-ni"
+  name                = "${trimspace(data.template_file.prefix.rendered)}-win-ni"
   location            = azurerm_resource_group.example.location
   resource_group_name = azurerm_resource_group.example.name
 
   ip_configuration {
-    name                          = "${trimspace(data.template_file.sub_id.rendered)}-win-ipc"
+    name                          = "${trimspace(data.template_file.prefix.rendered)}-win-ipc"
     subnet_id                     = azurerm_subnet.example.id
     private_ip_address_allocation = var.private_ip_address_allocation
     public_ip_address_id          = azurerm_public_ip.example.id
@@ -97,7 +97,7 @@ resource "azurerm_network_interface_security_group_association" "example" {
 }
 
 resource "azurerm_windows_virtual_machine" "example" {
-  name                = "${trimspace(data.template_file.sub_id.rendered)}-win-win-vm"
+  name                = "${trimspace(data.template_file.prefix.rendered)}-win-vm"
   resource_group_name = azurerm_resource_group.example.name
   location            = azurerm_resource_group.example.location
 
