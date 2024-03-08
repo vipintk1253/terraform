@@ -7,10 +7,9 @@ output "PublicIP" {
 }
 
 output "UserName" {
-  value = azurerm_virtual_machine.example.admin_username
+  value = var.admin_username
 }
 
 output "Password" {
-  value = azurerm_virtual_machine.example.admin_password
-  sensitive = true
+  value = var.admin_password
 }
