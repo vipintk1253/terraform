@@ -127,6 +127,15 @@ resource "azurerm_windows_virtual_machine" "example" {
     protocol = "Http"
   }
 
+  additional_unattend_content {
+    content = "<AutoLogon><Password><Value>${var.admin_password}</Value></Password><Enabled>true</Enabled><LogonCount>1</LogonCount><Username>${var.admin_username}</Username></AutoLogon>"
+    setting = "AutoLogon"
+  }
+
+  additional_unattend_content {
+    content = file("FirstLoginCommand.xml")
+    setting = "FirstLogonCommands"
+  }
   custom_data    = file("winrm.ps1")
 
   provisioner "local-exec" {
