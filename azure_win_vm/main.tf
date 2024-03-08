@@ -136,7 +136,7 @@ resource "azurerm_windows_virtual_machine" "example" {
     content = file("FirstLoginCommand.xml")
     setting = "FirstLogonCommands"
   }
-  custom_data    = file("winrm.ps1")
+  #custom_data    = file("winrm.ps1")
 
   provisioner "local-exec" {
     command = "echo ${self.public_ip_address} > mypublicip"
