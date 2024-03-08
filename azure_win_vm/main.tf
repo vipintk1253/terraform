@@ -96,8 +96,7 @@ resource "azurerm_network_interface_security_group_association" "example" {
   network_security_group_id = azurerm_network_security_group.example.id
 }
 
-#resource "azurerm_windows_virtual_machine" "example" {
-resource "azurerm_virtual_machine" "example" {
+resource "azurerm_windows_virtual_machine" "example" {
   name                = "${trimspace(data.template_file.prefix.rendered)}-win-vm"
   resource_group_name = azurerm_resource_group.example.name
   location            = azurerm_resource_group.example.location
