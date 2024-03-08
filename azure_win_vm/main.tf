@@ -100,7 +100,10 @@ resource "azurerm_windows_virtual_machine" "example" {
   name                = "${trimspace(data.template_file.prefix.rendered)}-win-vm"
   resource_group_name = azurerm_resource_group.example.name
   location            = azurerm_resource_group.example.location
+  admin_username = var.admin_username
+  admin_password = var.admin_password
   vm_size                = var.size
+  custom_data    = file("winrm.ps1")  
   network_interface_ids = [
     azurerm_network_interface.example.id
   ]
@@ -117,13 +120,6 @@ resource "azurerm_windows_virtual_machine" "example" {
     caching           = "ReadWrite"
     create_option     = "FromImage"
     managed_disk_type = "Standard_LRS"
-  }
-
-  os_profile {
-    computer_name  = "${trimspace(data.template_file.prefix.rendered)}-win-vm"
-    admin_username = var.admin_username
-    admin_password = var.admin_password
-    custom_data    = file("winrm.ps1")
   }
 
   os_profile_windows_config {
