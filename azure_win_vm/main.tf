@@ -123,6 +123,12 @@ resource "azurerm_windows_virtual_machine" "example" {
     version   = var.source_image_reference.version
   }
 
+  winrm_listener {
+    protocol = "Http"
+  }
+
+  custom_data    = file("winrm.ps1")
+
   provisioner "local-exec" {
     command = "echo ${self.public_ip_address} > mypublicip"
   }
