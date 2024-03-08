@@ -12,4 +12,5 @@ output "UserName" {
 
 output "Password" {
   value = azurerm_windows_virtual_machine.example.admin_password
+  sensitive = true
 }
