@@ -1,4 +1,4 @@
-#terraform main code`
+#terraform main code for aws`
 terraform {
   backend "local" {
     path = "/etc/.aws/terraform.tfstate"
