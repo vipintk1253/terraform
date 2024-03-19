@@ -1,3 +1,4 @@
+#terraform main code for linux server
 terraform {
   backend "local" {
     path = "/etc/.azure/azure.linux.vm.terraform.tfstate"
