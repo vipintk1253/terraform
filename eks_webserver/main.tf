@@ -84,7 +84,7 @@ resource "kubernetes_deployment" "example" {
   }
 
   spec {
-    replicas = 3
+    replicas = 4
 
     selector {
       match_labels = {
